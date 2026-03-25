@@ -251,7 +251,7 @@ const P = {
 // ============ SECTION 1: WHO ============
 const allWeeks = [];
 let cur = new Date(2026,0,5);
-const end = new Date(2026,2,23);
+const end = new Date(2026,2,27);
 while(cur<=end){
   const sun=new Date(cur); sun.setDate(sun.getDate()+6);
   allWeeks.push({monday:new Date(cur),sunday:sun,count:0,minutes:0});
@@ -344,7 +344,7 @@ allWeeks.forEach(w=>{
 
 // ============ SECTION 2: Energy ============
 const allDates=[];
-let dd=new Date(2026,0,1); const endD=new Date(2026,2,25);
+let dd=new Date(2026,0,1); const endD=new Date(2026,2,27);
 while(dd<=endD){allDates.push(dd.toISOString().slice(0,10));dd.setDate(dd.getDate()+1);}
 
 let energy=45,consW=0,consR=0;
