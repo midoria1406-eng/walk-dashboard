@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Walking Dashboard 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    font-family:'IBM Plex Sans Thai','Segoe UI',sans-serif;
+    background:#faf7f5;color:#3d3530;padding:28px 20px;min-height:100vh;
+  }
+  .container{max-width:980px;margin:0 auto}
+
+  /* Header */
+  .header{margin-bottom:28px}
+  .header h1{font-size:1.55rem;font-weight:700;color:#2d2520;margin-bottom:2px}
+  .header .sub{font-size:0.88rem;color:#9a8e85}
+
+  /* Section divider */
+  .section{margin-bottom:32px}
+  .section-title{
+    font-size:1.1rem;font-weight:600;color:#5c4f45;margin-bottom:16px;
+    padding-bottom:8px;border-bottom:2px solid #ece6e0;
+    display:flex;align-items:center;gap:8px;
+  }
+  .section-icon{font-size:1.2rem}
+
+  /* Cards */
+  .stats{display:grid;gap:10px;margin-bottom:20px}
+  .stats-3{grid-template-columns:repeat(3,1fr)}
+  .stats-4{grid-template-columns:repeat(4,1fr)}
+  .stat-card{
+    background:#fff;border-radius:14px;padding:16px;text-align:center;
+    border:1px solid #ece6e0;box-shadow:0 1px 3px rgba(0,0,0,0.04);
+  }
+  .stat-label{font-size:0.68rem;color:#9a8e85;text-transform:uppercase;letter-spacing:0.04em;font-weight:500}
+  .stat-value{font-size:1.85rem;font-weight:700;margin-top:3px}
+  .stat-sub{font-size:0.76rem;color:#b5a99f;margin-top:2px}
+
+  /* Info box */
+  .info-box{
+    background:#fff;border-radius:14px;padding:16px 20px;
+    border:1px solid #ece6e0;margin-bottom:20px;
+    line-height:1.75;font-size:0.84rem;color:#6b5e54;
+    box-shadow:0 1px 3px rgba(0,0,0,0.04);
+  }
+  .info-box strong{color:#3d3530}
+  .info-box.blue{border-left:4px solid #a8c8f0}
+  .info-box.purple{border-left:4px solid #c4b5e3}
+  .tag{display:inline-block;padding:2px 8px;border-radius:5px;font-size:0.74rem;font-weight:600}
+  .tag-min{background:#fef3d0;color:#a67c00;border:1px solid #f0dfa0}
+  .tag-opt{background:#d6f0d6;color:#2e7d2e;border:1px solid #b0ddb0}
+
+  /* Chart wrapper */
+  .chart-wrapper{
+    background:#fff;border-radius:16px;padding:20px 20px 16px;
+    border:1px solid #ece6e0;margin-bottom:20px;
+    box-shadow:0 1px 3px rgba(0,0,0,0.04);
+  }
+  .chart-title{font-size:0.92rem;font-weight:600;margin-bottom:12px;color:#5c4f45}
+  .chart-container{position:relative;height:320px}
+  .chart-container.short{height:260px}
+
+  /* Table */
+  .table-wrap{
+    background:#fff;border-radius:16px;padding:18px;
+    border:1px solid #ece6e0;margin-bottom:20px;overflow-x:auto;
+    box-shadow:0 1px 3px rgba(0,0,0,0.04);
+  }
+  .week-table{width:100%;border-collapse:collapse}
+  .week-table th{
+    text-align:left;padding:9px 10px;font-size:0.72rem;
+    color:#9a8e85;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;
+    border-bottom:2px solid #ece6e0;
+  }
+  .week-table td{padding:8px 10px;font-size:0.82rem;border-bottom:1px solid #f5f0eb}
+  .week-table tr:hover{background:#faf7f5}
+  .badge{display:inline-block;padding:3px 10px;border-radius:10px;font-size:0.72rem;font-weight:600;white-space:nowrap}
+  .badge-pass{background:#d6f0d6;color:#2e7d2e}
+  .badge-min{background:#fef3d0;color:#a67c00}
+  .badge-fail{background:#fde2e2;color:#b33b3b}
+  .bar-bg{background:#f0ebe5;border-radius:4px;height:10px;width:100%;position:relative}
+  .bar-fill{height:100%;border-radius:4px;transition:width 0.4s;position:relative;z-index:2}
+  .bar-marker{position:absolute;top:-3px;height:16px;width:2px;z-index:3;border-radius:1px}
+
+  /* Phases */
+  .phases{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+  .phase{
+    background:#fff;border-radius:14px;padding:16px;
+    border:1px solid #ece6e0;box-shadow:0 1px 3px rgba(0,0,0,0.04);
+  }
+  .phase-header{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .phase-dot{width:10px;height:10px;border-radius:50%}
+  .phase-title{font-size:0.82rem;font-weight:600;color:#3d3530}
+  .phase-body{font-size:0.78rem;color:#9a8e85;line-height:1.6}
+  .phase-stat{font-size:1.3rem;font-weight:700;margin:2px 0}
+
+  /* Meters */
+  .meter-row{display:flex;align-items:center;gap:12px;margin-bottom:7px}
+  .meter-label{width:52px;text-align:right;font-size:0.74rem;color:#9a8e85;font-weight:500}
+  .meter-bar{flex:1;height:24px;background:#f0ebe5;border-radius:7px;position:relative;overflow:hidden}
+  .meter-fill{height:100%;border-radius:7px;transition:width 0.6s}
+  .meter-text{position:absolute;right:10px;top:4px;font-size:0.72rem;font-weight:700;color:#3d3530}
+
+  .note{font-size:0.75rem;color:#b5a99f;margin-top:14px;text-align:center;line-height:1.6}
+
+  /* Pastel palette */
+  :root{
+    --p-rose:#f2b8c6;--p-rose-soft:#fbe4ea;
+    --p-peach:#f7c9a8;--p-peach-soft:#fde8d5;
+    --p-lemon:#f5e6a3;--p-lemon-soft:#fdf6dc;
+    --p-mint:#a8ddc5;--p-mint-soft:#d6f0e3;
+    --p-sky:#a8c8f0;--p-sky-soft:#d5e5f7;
+    --p-lilac:#c4b5e3;--p-lilac-soft:#e4ddf3;
+    --p-coral:#e8a49a;
+    --p-sage:#b5c9a8;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>Walking Dashboard 2026</h1>
+    <div class="sub">1 ม.ค. – 25 มี.ค. 2026 &middot; ข้อมูลจาก Google Calendar</div>
+  </div>
+
+  <!-- ============ SECTION 1: WHO Guideline ============ -->
+  <div class="section">
+    <div class="section-title"><span class="section-icon">1</span> เทียบเกณฑ์แนะนำ WHO</div>
+
+    <div class="info-box blue">
+      <strong>เกณฑ์ WHO (2020) สำหรับผู้ใหญ่ 18-64 ปี:</strong><br>
+      <span class="tag tag-min">ขั้นต่ำ</span> ออกกำลังกายแบบ moderate อย่างน้อย <strong>150 นาที/สัปดาห์</strong> = walk 1 ชม. x 3 วัน<br>
+      <span class="tag tag-opt">เหมาะสม</span> เพื่อประโยชน์สูงสุด ควรถึง <strong>300 นาที/สัปดาห์</strong> = walk 1 ชม. x 5 วัน
+    </div>
+
+    <div class="stats stats-3" id="whoStats"></div>
+
+    <div class="chart-wrapper">
+      <div class="chart-title">นาทีออกกำลังกายต่อสัปดาห์ vs เกณฑ์ WHO</div>
+      <div class="chart-container"><canvas id="whoChart"></canvas></div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="chart-title">รายละเอียดทุกสัปดาห์</div>
+      <table class="week-table">
+        <thead><tr>
+          <th>สัปดาห์</th><th>walk</th><th>นาที</th><th style="width:28%">เทียบเกณฑ์</th><th>ผลประเมิน</th>
+        </tr></thead>
+        <tbody id="whoTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============ SECTION 2: Energy Level ============ -->
+  <div class="section">
+    <div class="section-title"><span class="section-icon">2</span> ประมาณการ Energy Level</div>
+
+    <div class="info-box purple">
+      <strong>โมเดลที่ใช้ประมาณการ:</strong><br>
+      วันที่ walk → พลังงานเพิ่ม +4 (endorphin + cardiovascular fitness) ·
+      วันที่พัก → ลดลง -1.5 ตามธรรมชาติ ·
+      ออกกำลังกายติดต่อกัน → โบนัส momentum +1 ·
+      หยุดพักนาน ≥5 วัน → detraining effect เพิ่ม -0.5/วัน ·
+      ช่วง 20–100 คะแนน เริ่มต้นที่ 45
+    </div>
+
+    <div class="stats stats-4" id="energyStats"></div>
+
+    <div class="chart-wrapper">
+      <div class="chart-title">Energy Level รายวัน</div>
+      <div class="chart-container"><canvas id="energyChart"></canvas></div>
+    </div>
+
+    <div class="chart-wrapper">
+      <div class="chart-title">Energy Level เฉลี่ยรายสัปดาห์ vs จำนวน Walk</div>
+      <div class="chart-container short"><canvas id="weeklyCompare"></canvas></div>
+    </div>
+
+    <div id="phases" class="phases"></div>
+
+    <div class="chart-wrapper">
+      <div class="chart-title">Energy Level ณ จุดสำคัญ</div>
+      <div id="meters"></div>
+    </div>
+  </div>
+
+  <p class="note">
+    walk ทุกครั้ง ~60 นาที (มี 1 ครั้ง 30 นาที และ 1 ครั้ง 90 นาที) ·
+    Energy Level เป็นการประมาณการจากรูปแบบการออกกำลังกายเท่านั้น ไม่ได้วัดจริง ·
+    ปัจจัยอื่นเช่น การนอน อาหาร ความเครียด ไม่ได้รวมในโมเดล
+  </p>
+</div>
+
+<script>
+// ============ SHARED DATA ============
+const walkDates = new Set([
+  "2026-01-05","2026-01-06","2026-01-07","2026-01-09",
+  "2026-01-12","2026-01-13","2026-01-14","2026-01-15","2026-01-16",
+  "2026-01-20","2026-01-22","2026-01-23","2026-01-24","2026-01-25",
+  "2026-01-27","2026-01-28","2026-01-29","2026-01-30","2026-01-31",
+  "2026-02-02","2026-02-03",
+  "2026-02-10","2026-02-13","2026-02-14",
+  "2026-02-17","2026-02-18","2026-02-20","2026-02-21","2026-02-22","2026-02-23","2026-02-26",
+  "2026-03-08","2026-03-12","2026-03-25"
+]);
+
+const events = [
+  {date:"2026-01-05",min:30},{date:"2026-01-06",min:60},{date:"2026-01-07",min:60},{date:"2026-01-09",min:60},
+  {date:"2026-01-12",min:60},{date:"2026-01-13",min:90},{date:"2026-01-14",min:60},{date:"2026-01-15",min:60},{date:"2026-01-16",min:60},
+  {date:"2026-01-20",min:60},{date:"2026-01-22",min:60},{date:"2026-01-23",min:60},{date:"2026-01-24",min:60},{date:"2026-01-25",min:60},
+  {date:"2026-01-27",min:60},{date:"2026-01-28",min:60},{date:"2026-01-29",min:60},{date:"2026-01-30",min:60},{date:"2026-01-31",min:60},
+  {date:"2026-02-02",min:60},{date:"2026-02-03",min:60},
+  {date:"2026-02-10",min:60},{date:"2026-02-13",min:60},{date:"2026-02-14",min:60},
+  {date:"2026-02-17",min:60},{date:"2026-02-18",min:60},{date:"2026-02-20",min:60},{date:"2026-02-21",min:60},{date:"2026-02-22",min:60},{date:"2026-02-23",min:60},{date:"2026-02-26",min:60},
+  {date:"2026-03-08",min:60},{date:"2026-03-12",min:60},{date:"2026-03-25",min:60},
+];
+
+const thM = ['ม.ค.','ก.พ.','มี.ค.'];
+function thaiDate(ds) { const p = ds.split('-'); return parseInt(p[2]) + ' ' + thM[parseInt(p[1])-1]; }
+function shortLabel(d) { return d.getDate() + ' ' + (thM[d.getMonth()] || ''); }
+function fmtDate(d) { return d.toISOString().slice(0,10); }
+function getMondayOfWeek(ds) {
+  const d = new Date(ds+'T12:00:00'); const day = d.getDay();
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() - day + (day===0?-6:1));
+}
+
+// Chart.js global defaults for pastel theme
+Chart.defaults.color = '#9a8e85';
+Chart.defaults.font.family = "'IBM Plex Sans Thai','Segoe UI',sans-serif";
+
+// Pastel colors
+const P = {
+  mint:'#a8ddc5', mintSoft:'rgba(168,221,197,0.25)',
+  rose:'#f2b8c6', roseSoft:'rgba(242,184,198,0.3)',
+  peach:'#f7c9a8', peachSoft:'rgba(247,201,168,0.3)',
+  lemon:'#f5e6a3', lemonSoft:'rgba(245,230,163,0.3)',
+  lilac:'#c4b5e3', lilacSoft:'rgba(196,181,227,0.25)',
+  sky:'#a8c8f0', skySoft:'rgba(168,200,240,0.2)',
+  coral:'#e8a49a', coralSoft:'rgba(232,164,154,0.3)',
+  sage:'#b5c9a8',
+  text:'#5c4f45', textLight:'#9a8e85', grid:'#f0ebe5',
+};
+
+// ============ SECTION 1: WHO ============
+const allWeeks = [];
+let cur = new Date(2026,0,5);
+const end = new Date(2026,2,23);
+while(cur<=end){
+  const sun=new Date(cur); sun.setDate(sun.getDate()+6);
+  allWeeks.push({monday:new Date(cur),sunday:sun,count:0,minutes:0});
+  cur.setDate(cur.getDate()+7);
+}
+events.forEach(ev=>{
+  const mon=getMondayOfWeek(ev.date); const ms=fmtDate(mon);
+  const wk=allWeeks.find(w=>fmtDate(w.monday)===ms);
+  if(wk){wk.count++;wk.minutes+=ev.min;}
+});
+
+const weeksAboveMin=allWeeks.filter(w=>w.minutes>=150).length;
+const weeksAboveOpt=allWeeks.filter(w=>w.minutes>=300).length;
+const avgMin=Math.round(allWeeks.reduce((s,w)=>s+w.minutes,0)/allWeeks.length);
+
+document.getElementById('whoStats').innerHTML=`
+  <div class="stat-card">
+    <div class="stat-label">ถึงเกณฑ์ขั้นต่ำ (≥150 นาที)</div>
+    <div class="stat-value" style="color:#a67c00">${weeksAboveMin}<span style="font-size:1rem;color:#b5a99f">/${allWeeks.length}</span></div>
+    <div class="stat-sub">${Math.round(weeksAboveMin/allWeeks.length*100)}% ของสัปดาห์ทั้งหมด</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">ถึงเกณฑ์เหมาะสม (≥300 นาที)</div>
+    <div class="stat-value" style="color:#2e7d2e">${weeksAboveOpt}<span style="font-size:1rem;color:#b5a99f">/${allWeeks.length}</span></div>
+    <div class="stat-sub">${Math.round(weeksAboveOpt/allWeeks.length*100)}% ของสัปดาห์ทั้งหมด</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">เฉลี่ยต่อสัปดาห์</div>
+    <div class="stat-value" style="color:${avgMin>=300?'#2e7d2e':avgMin>=150?'#a67c00':'#b33b3b'}">${avgMin}<span style="font-size:0.85rem;color:#b5a99f"> นาที</span></div>
+    <div class="stat-sub">${avgMin>=150?'ถึงเกณฑ์ขั้นต่ำ':'ต่ำกว่าเกณฑ์'}</div>
+  </div>`;
+
+// WHO Chart
+const whoLabels=allWeeks.map(w=>shortLabel(w.monday)+'–'+shortLabel(w.sunday));
+const whoMinutes=allWeeks.map(w=>w.minutes);
+const whoColors=whoMinutes.map(m=> m>=300?P.mint : m>=150?P.lemon : m>0?P.rose : P.grid);
+
+new Chart(document.getElementById('whoChart').getContext('2d'),{
+  type:'bar',
+  data:{labels:whoLabels,datasets:[{
+    label:'นาที/สัปดาห์',data:whoMinutes,
+    backgroundColor:whoColors,
+    borderRadius:8,borderSkipped:false,barPercentage:0.6,
+  }]},
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    layout:{padding:{top:8}},
+    plugins:{
+      legend:{labels:{font:{size:11}}},
+      tooltip:{callbacks:{afterLabel:c=>{
+        const m=c.parsed.y;
+        if(m>=300) return 'ถึงเกณฑ์เหมาะสม';
+        if(m>=150) return 'ถึงขั้นต่ำ';
+        return 'ต่ำกว่าเกณฑ์';
+      }}},
+      annotation:{annotations:{
+        minLine:{type:'line',yMin:150,yMax:150,borderColor:'#d4b060',borderWidth:2,borderDash:[8,4],
+          label:{display:true,content:'ขั้นต่ำ 150 นาที',position:'start',backgroundColor:'#fef3d0',color:'#a67c00',font:{size:10,weight:'bold'},padding:4}},
+        optLine:{type:'line',yMin:300,yMax:300,borderColor:'#7cb87c',borderWidth:2,borderDash:[8,4],
+          label:{display:true,content:'เหมาะสม 300 นาที',position:'start',backgroundColor:'#d6f0d6',color:'#2e7d2e',font:{size:10,weight:'bold'},padding:4}},
+      }}
+    },
+    scales:{
+      x:{ticks:{font:{size:9.5},maxRotation:45},grid:{color:'transparent'}},
+      y:{beginAtZero:true,max:380,ticks:{stepSize:60,callback:v=>v+' min'},grid:{color:P.grid}}
+    }
+  }
+});
+
+// WHO Table
+const tbody=document.getElementById('whoTable');
+allWeeks.forEach(w=>{
+  const pct=Math.min(w.minutes/300*100,120);
+  const fc=w.minutes>=300?'#2e7d2e':w.minutes>=150?'#a67c00':w.minutes>0?'#b33b3b':'#b5a99f';
+  const bc=w.minutes>=300?P.mint:w.minutes>=150?P.lemon:w.minutes>0?P.rose:P.grid;
+  let badge,bc2;
+  if(w.minutes>=300){badge='เกินเกณฑ์เหมาะสม';bc2='badge-pass';}
+  else if(w.minutes>=150){badge='ถึงขั้นต่ำ';bc2='badge-min';}
+  else if(w.minutes>0){badge='ต่ำกว่าเกณฑ์';bc2='badge-fail';}
+  else{badge='ไม่ได้ออกกำลังกาย';bc2='badge-fail';}
+  tbody.innerHTML+=`<tr>
+    <td style="white-space:nowrap">${shortLabel(w.monday)}–${shortLabel(w.sunday)}</td>
+    <td style="text-align:center">${w.count}</td>
+    <td style="font-weight:600;color:${fc}">${w.minutes}</td>
+    <td><div class="bar-bg"><div class="bar-fill" style="width:${Math.min(pct,100)}%;background:${bc}"></div>
+      <div class="bar-marker" style="left:50%;background:#d4b060"></div>
+      <div class="bar-marker" style="left:100%;background:#7cb87c"></div></div></td>
+    <td><span class="badge ${bc2}">${badge}</span></td></tr>`;
+});
+
+// ============ SECTION 2: Energy ============
+const allDates=[];
+let dd=new Date(2026,0,1); const endD=new Date(2026,2,25);
+while(dd<=endD){allDates.push(dd.toISOString().slice(0,10));dd.setDate(dd.getDate()+1);}
+
+let energy=45,consW=0,consR=0;
+const eData=[],wMark=[];
+allDates.forEach(ds=>{
+  const isW=walkDates.has(ds);
+  if(isW){energy+=4+(consW>0?1:0);consW++;consR=0;}
+  else{let dec=1.5;consR++;if(consR>=5)dec+=0.5;if(consR>=10)dec+=0.3;energy-=dec;consW=0;}
+  energy=Math.max(20,Math.min(100,energy));
+  eData.push({date:ds,energy:Math.round(energy*10)/10,isWalk:isW});
+  wMark.push(isW?energy:null);
+});
+
+const smoothed=eData.map((e,i)=>{
+  if(i<6)return null;
+  let s=0;for(let j=i-6;j<=i;j++)s+=eData[j].energy;
+  return Math.round(s/7*10)/10;
+});
+
+const peak=Math.max(...eData.map(e=>e.energy));
+const peakD=eData.find(e=>e.energy===peak).date;
+const curE=eData[eData.length-1].energy;
+const low=Math.min(...eData.map(e=>e.energy));
+const chg=Math.round((curE-eData[0].energy)*10)/10;
+
+document.getElementById('energyStats').innerHTML=`
+  <div class="stat-card"><div class="stat-label">พลังงานสูงสุด</div>
+    <div class="stat-value" style="color:#2e7d2e">${peak}</div><div class="stat-sub">${thaiDate(peakD)}</div></div>
+  <div class="stat-card"><div class="stat-label">พลังงานปัจจุบัน</div>
+    <div class="stat-value" style="color:${curE>=60?'#a67c00':'#b33b3b'}">${curE}</div><div class="stat-sub">25 มี.ค.</div></div>
+  <div class="stat-card"><div class="stat-label">จุดต่ำสุด</div>
+    <div class="stat-value" style="color:#b33b3b">${low}</div><div class="stat-sub">ช่วงพักยาว</div></div>
+  <div class="stat-card"><div class="stat-label">เปลี่ยนจากต้นปี</div>
+    <div class="stat-value" style="color:${chg>=0?'#2e7d2e':'#b33b3b'}">${chg>0?'+':''}${chg}</div><div class="stat-sub">${chg>=0?'เพิ่มขึ้น':'ลดลง'}</div></div>`;
+
+// Energy chart — FIXED overflow with proper layout padding
+const ctx1=document.getElementById('energyChart').getContext('2d');
+const grad=ctx1.createLinearGradient(0,0,0,320);
+grad.addColorStop(0,P.lilacSoft); grad.addColorStop(1,'rgba(196,181,227,0.02)');
+
+new Chart(ctx1,{
+  type:'line',
+  data:{
+    labels:allDates.map(ds=>{const day=parseInt(ds.slice(8));return(day===1||day===15)?thaiDate(ds):'';}),
+    datasets:[
+      {label:'Energy Level',data:eData.map(e=>e.energy),
+        borderColor:P.lilac,backgroundColor:grad,borderWidth:2,fill:true,tension:0.3,
+        pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:P.lilac},
+      {label:'7-day Moving Avg',data:smoothed,
+        borderColor:P.rose,borderWidth:2.5,borderDash:[6,3],fill:false,tension:0.4,pointRadius:0},
+      {label:'วัน Walk',data:wMark,type:'scatter',
+        backgroundColor:P.coral,borderColor:'#fff',borderWidth:1.5,
+        pointRadius:5,pointStyle:'circle',showLine:false}
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    layout:{padding:{top:24,right:12,bottom:4}},
+    interaction:{mode:'index',intersect:false},
+    plugins:{
+      legend:{labels:{font:{size:11},usePointStyle:true,padding:16},position:'bottom'},
+      tooltip:{callbacks:{
+        title:items=>{const i=items[0].dataIndex;return thaiDate(allDates[i])+(walkDates.has(allDates[i])?' — walk':'');},
+        label:c=>{if(c.datasetIndex===2)return 'Walk day';return c.dataset.label+': '+(c.parsed.y!==null?c.parsed.y:'-');}
+      }},
+      annotation:{annotations:{
+        zHigh:{type:'box',yMin:70,yMax:105,backgroundColor:'rgba(168,221,197,0.1)',borderWidth:0},
+        zMid:{type:'box',yMin:50,yMax:70,backgroundColor:'rgba(245,230,163,0.08)',borderWidth:0},
+        zLow:{type:'box',yMin:20,yMax:50,backgroundColor:'rgba(242,184,198,0.08)',borderWidth:0},
+      }}
+    },
+    scales:{
+      x:{ticks:{font:{size:10},maxRotation:0},grid:{color:'transparent'}},
+      y:{min:20,max:108,ticks:{stepSize:10,callback:v=>v<=100?v:''},grid:{color:P.grid}}
+    }
+  }
+});
+
+// Weekly comparison
+const wkMap={};
+eData.forEach(e=>{
+  const d=new Date(e.date+'T12:00:00');const day=d.getDay();
+  const mon=new Date(d.getFullYear(),d.getMonth(),d.getDate()-day+(day===0?-6:1));
+  const ms=fmtDate(mon);
+  if(!wkMap[ms])wkMap[ms]={energies:[],walks:0};
+  wkMap[ms].energies.push(e.energy);if(e.isWalk)wkMap[ms].walks++;
+});
+const wKeys=Object.keys(wkMap).sort().filter(k=>k>='2026-01-05');
+const wLabels=wKeys.map(k=>{const s=new Date(k+'T12:00:00');s.setDate(s.getDate()+6);return thaiDate(k)+'–'+thaiDate(fmtDate(s));});
+const wAvg=wKeys.map(k=>{const a=wkMap[k].energies;return Math.round(a.reduce((s,v)=>s+v,0)/a.length*10)/10;});
+const wWalks=wKeys.map(k=>wkMap[k].walks);
+
+new Chart(document.getElementById('weeklyCompare').getContext('2d'),{
+  type:'bar',
+  data:{labels:wLabels,datasets:[
+    {label:'Walk (ครั้ง)',data:wWalks,
+      backgroundColor:wWalks.map(w=>w>=3?P.roseSoft:w>0?'rgba(242,184,198,0.15)':'rgba(0,0,0,0.03)'),
+      borderColor:wWalks.map(w=>w>=3?P.rose:w>0?'rgba(242,184,198,0.4)':'transparent'),
+      borderWidth:1,borderRadius:4,yAxisID:'y1',barPercentage:0.5,order:2},
+    {label:'Energy เฉลี่ย',data:wAvg,type:'line',
+      borderColor:P.lilac,backgroundColor:P.lilacSoft,fill:true,tension:0.35,borderWidth:2.5,
+      pointRadius:4,
+      pointBackgroundColor:wAvg.map(v=>v>=70?P.mint:v>=50?P.lemon:P.rose),
+      pointBorderColor:'#fff',pointBorderWidth:2,yAxisID:'y',order:1}
+  ]},
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    layout:{padding:{top:8}},
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{labels:{font:{size:11},usePointStyle:true}}},
+    scales:{
+      x:{ticks:{font:{size:9},maxRotation:45},grid:{color:'transparent'}},
+      y:{position:'left',min:20,max:100,ticks:{stepSize:20,callback:v=>v},grid:{color:P.grid},
+        title:{display:true,text:'Energy Level',color:P.lilac,font:{size:10}}},
+      y1:{position:'right',min:0,max:7,ticks:{stepSize:1},grid:{display:false},
+        title:{display:true,text:'Walk ครั้ง',color:P.rose,font:{size:10}}}
+    }
+  }
+});
+
+// Phases
+const janD=eData.filter(e=>e.date.startsWith('2026-01'));
+const febD=eData.filter(e=>e.date.startsWith('2026-02'));
+const marD=eData.filter(e=>e.date.startsWith('2026-03'));
+const aJ=Math.round(janD.reduce((s,e)=>s+e.energy,0)/janD.length);
+const aF=Math.round(febD.reduce((s,e)=>s+e.energy,0)/febD.length);
+const aM=Math.round(marD.reduce((s,e)=>s+e.energy,0)/marD.length);
+
+document.getElementById('phases').innerHTML=`
+  <div class="phase">
+    <div class="phase-header"><div class="phase-dot" style="background:${P.mint}"></div><div class="phase-title">ม.ค. — สร้าง Momentum</div></div>
+    <div class="phase-stat" style="color:#2e7d2e">${aJ}/100</div>
+    <div class="phase-body">Walk 19 ครั้ง แทบทุกวัน<br>พลังงานพุ่งขึ้นต่อเนื่อง<br>สร้าง fitness base ได้ดี</div>
+  </div>
+  <div class="phase">
+    <div class="phase-header"><div class="phase-dot" style="background:${P.lemon}"></div><div class="phase-title">ก.พ. — รักษาระดับ</div></div>
+    <div class="phase-stat" style="color:#a67c00">${aF}/100</div>
+    <div class="phase-body">Walk 11 ครั้ง ยังพอสม่ำเสมอ<br>มีช่วงหยุด 1 สัปดาห์ต้นเดือน<br>พลังงานแกว่ง แต่ฟื้นกลับได้</div>
+  </div>
+  <div class="phase">
+    <div class="phase-header"><div class="phase-dot" style="background:${P.rose}"></div><div class="phase-title">มี.ค. — สูญเสีย Momentum</div></div>
+    <div class="phase-stat" style="color:#b33b3b">${aM}/100</div>
+    <div class="phase-body">Walk แค่ 3 ครั้ง ห่างกันมาก<br>Detraining effect ชัดเจน<br>พลังงานร่วงกลับจุดเริ่มต้น</div>
+  </div>`;
+
+// Meters
+const mStones=[
+  {label:'1 ม.ค.',idx:0},{label:'Peak',idx:eData.findIndex(e=>e.energy===peak)},
+  {label:'1 ก.พ.',idx:allDates.indexOf('2026-02-01')},
+  {label:'1 มี.ค.',idx:allDates.indexOf('2026-03-01')},
+  {label:'วันนี้',idx:eData.length-1},
+];
+const mEl=document.getElementById('meters');
+mStones.forEach(m=>{
+  const v=eData[m.idx].energy;
+  const c=v>=70?P.mint:v>=50?P.lemon:P.rose;
+  mEl.innerHTML+=`<div class="meter-row"><div class="meter-label">${m.label}</div>
+    <div class="meter-bar"><div class="meter-fill" style="width:${v}%;background:${c}"></div>
+    <div class="meter-text">${v}</div></div></div>`;
+});
+</script>
+</body>
+</html>
