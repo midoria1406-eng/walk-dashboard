@@ -454,10 +454,10 @@ new Chart(document.getElementById('weeklyCompare').getContext('2d'),{
     responsive:true,maintainAspectRatio:false,
     layout:{padding:{top:8}},
     interaction:{mode:'index',intersect:false},
-    plugins:{legend:{labels:{font:{size:11},usePointStyle:true}}},
+    plugins:{legend:{labels:{font:{size:11},usePointStyle:true,padding:16}}},
     scales:{
       x:{ticks:{font:{size:8},maxRotation:0,autoSkip:false},grid:{color:'transparent'}},
-      y:{position:'left',min:20,max:100,ticks:{stepSize:20,callback:v=>v},grid:{color:P.grid},
+      y:{position:'left',min:20,max:110,ticks:{stepSize:20,callback:v=>v<=100?v:''},grid:{color:P.grid},
         title:{display:true,text:'Energy Level',color:P.lilac,font:{size:10}}},
       y1:{position:'right',min:0,max:7,ticks:{stepSize:1},grid:{display:false},
         title:{display:true,text:'Walk ครั้ง',color:P.rose,font:{size:10}}}
